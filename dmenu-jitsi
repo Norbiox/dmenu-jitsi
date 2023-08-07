@@ -1,0 +1,71 @@
+#!/bin/bash
+################################################################################
+# Author: Norbert Chmiel (norbertchmiel.it@gmail.com)
+# Date:   August 7, 2023
+# Description: Easy run and manage your Jitsi room using dmenu.
+# Usage: dmenu-jitsi
+# License: MIT
+# Website: https://github.com/Norbiox/dmenu-jitsi
+#
+# Dependencies: 
+#   - dmenu
+#   - some web browser (e.g. firefox, chromium)
+#
+# Prerequisites: 
+#   - environment variable $BROWSER must be set to your preferred browser
+################################################################################
+
+if ! [ -f "$HOME/.dmenurc" ]; then
+	cp /usr/share/dmenu/dmenurc $HOME/.dmenurc
+fi
+. $HOME/.dmenurc
+dmenu_cmd="dmenu $DMENU_OPTIONS"
+
+
+rooms_config_file=$HOME/.config/jitsi/rooms
+# Check if environment variable $BROWSER is set
+if ! [ -n "$BROWSER" ]; then
+        echo "Error: environment variable $BROWSER must be set to your preferred browser"
+        exit 1
+fi
+
+# Check if file $rooms_config_file exists, if not create it with default values
+if ! [ -f "$rooms_config_file" ]; then
+        echo "Example Room=exampleroom" > $rooms_config_file
+fi
+
+# Variables
+declare -a options  # array containing all rooms names and other options
+declare -A rooms    # associative array containing all rooms names with their IDs
+
+# Populate options and rooms arrays
+readarray -t lines < $rooms_config_file
+for line in "${lines[@]}"; do
+        IFS="=" read -r -a entry <<< "$line"
+        options+=("${entry[0]}")
+        rooms[${entry[0]}]="${entry[1]}"
+done
+options+=("Random")
+
+# Ask user for action
+chosen=$(printf '%s\n' "${options[@]}" | $dmenu_cmd -i -l 20 -p "Room:")
+echo "$chosen"
+echo "$rooms[$chosen]"
+
+# Define action based on user choice
+if [[ "$chosen" == "Random" ]]; then
+        room=$(echo $RANDOM | md5sum | head -c 20)
+elif [ "$chosen" ]; then
+        room=${rooms[$chosen]}
+else
+        echo "Program terminated" && exit 1
+fi
+
+# Open Jitsi room
+echo "Opening Jitsi room $room..."
+link="https://meet.jit.si/${room}"
+$BROWSER $link --new-window
+
+# Copy link to clipboard
+echo $link | xclip -selection c
+echo "Link to meeting copied to clipboard"
