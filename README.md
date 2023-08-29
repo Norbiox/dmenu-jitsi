@@ -7,7 +7,7 @@ Easy open an manage your Jitsi rooms using dmenu
 * [X] open any saved room in browser
 * [X] open randomly named room
 * [X] automatically copy link to room in clipboard
-* [ ] add new room with custom name and ID
+* [X] add new room with custom name and ID
 
 ## Prerequisites
 
