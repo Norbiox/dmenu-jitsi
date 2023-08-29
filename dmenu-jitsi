@@ -45,7 +45,8 @@ for line in "${lines[@]}"; do
         options+=("${entry[0]}")
         rooms[${entry[0]}]="${entry[1]}"
 done
-options+=("Random")
+options+=("New room (name & save)")
+options+=("Random room")
 
 # Ask user for action
 chosen=$(printf '%s\n' "${options[@]}" | $dmenu_cmd -i -l 20 -p "Room:")
@@ -53,7 +54,17 @@ echo "$chosen"
 echo "$rooms[$chosen]"
 
 # Define action based on user choice
-if [[ "$chosen" == "Random" ]]; then
+if [[ "$chosen" == "New room (name & save)" ]]; then
+        room_name=$($dmenu_cmd -p "Name new room: " <&- && echo)
+        if [ -z "$room_name" ]; then
+                echo "Program terminated" && exit 1
+        fi
+        room=$($dmenu_cmd -p "Room ID (leave empty for random): " <&- && echo)
+        if [ -z "$room" ]; then
+                room=$(echo $RANDOM | md5sum | head -c 20)
+        fi
+        echo "$room_name=$room" >> $rooms_config_file
+elif [[ "$chosen" == "Random room" ]]; then
         room=$(echo $RANDOM | md5sum | head -c 20)
 elif [ "$chosen" ]; then
         room=${rooms[$chosen]}
